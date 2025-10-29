@@ -1,0 +1,14 @@
+services:
+  rimu-world:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./static/uploads:/app/static/uploads
+      - rimu_db:/app/data
+    environment:
+      - ADMIN_USERNAME=rimu_admin
+      - ADMIN_PASSWORD=rimu2024secure
+
+volumes:
+  rimu_db:
