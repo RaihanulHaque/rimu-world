@@ -199,6 +199,71 @@ async def create_product(
     
     return {"message": "Product created successfully", "product_id": product_id}
 
+@app.put("/api/admin/products/{product_id}")
+async def update_product(
+    product_id: str,
+    name: str = Form(...),
+    type: str = Form(...),
+    category: str = Form(...),
+    details: str = Form(...),
+    price: float = Form(...),
+    sizes: str = Form("[]"),
+    colors: str = Form("[]"),
+    images: Optional[List[UploadFile]] = File(None),
+    existing_images: str = Form("[]"),
+    admin: str = Depends(verify_admin)
+):
+    conn = sqlite3.connect(DATABASE_PATH)
+    c = conn.cursor()
+    
+    # Get existing product
+    c.execute('SELECT images FROM products WHERE product_id = ?', (product_id,))
+    row = c.fetchone()
+    
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Handle images
+    existing_image_list = json.loads(existing_images)
+    image_paths = existing_image_list.copy()
+    
+    # Add new images if uploaded
+    if images and images[0].filename:
+        for idx, image in enumerate(images):
+            if image.filename:
+                ext = image.filename.split('.')[-1]
+                filename = f"{product_id}_{len(image_paths) + idx}.{ext}"
+                filepath = f"static/uploads/{filename}"
+                
+                with open(filepath, "wb") as f:
+                    content = await image.read()
+                    f.write(content)
+                
+                image_paths.append(f"/static/uploads/{filename}")
+    
+    # Update product in database
+    c.execute('''
+        UPDATE products 
+        SET name = ?, type = ?, category = ?, details = ?, price = ?, sizes = ?, colors = ?, images = ?
+        WHERE product_id = ?
+    ''', (
+        name,
+        type,
+        category,
+        details,
+        price,
+        sizes,
+        colors,
+        json.dumps(image_paths),
+        product_id
+    ))
+    
+    conn.commit()
+    conn.close()
+    
+    return {"message": "Product updated successfully", "product_id": product_id}
+
 @app.delete("/api/admin/products/{product_id}")
 async def delete_product(product_id: str, admin: str = Depends(verify_admin)):
     conn = sqlite3.connect(DATABASE_PATH)

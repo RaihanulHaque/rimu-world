@@ -339,6 +339,21 @@
             font-size: 0.9rem;
         }
 
+        .edit-product-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 0.5rem;
+        }
+
+        .edit-product-btn:hover {
+            background: var(--primary-dark);
+        }
+
         .delete-product-btn {
             padding: 0.75rem 1.5rem;
             background: var(--danger);
@@ -351,6 +366,103 @@
 
         .delete-product-btn:hover {
             background: #dc2626;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Edit Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 2rem 0;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: var(--secondary);
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-light);
+            line-height: 1;
+            padding: 0;
+        }
+
+        .close-modal:hover {
+            color: var(--danger);
+        }
+
+        .image-remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .existing-image {
+            position: relative;
+            display: inline-block;
+        }
+
+        .existing-images-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .existing-images-container img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
         }
 
         .success-message {
@@ -537,11 +649,106 @@
         </div>
     </div>
 
+    <!-- Edit Product Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Product</h2>
+                <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="editProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Price (৳) *</label>
+                        <input type="number" id="editProductPrice" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type *</label>
+                        <select id="editProductType" required onchange="updateEditCategoryOptions()">
+                            <option value="">Select Type</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="jewelry">Jewelry</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="editProductCategory" required>
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Product Details *</label>
+                        <textarea id="editProductDetails" required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Colors</label>
+                        <input type="color" id="editColorPicker">
+                        <button type="button" class="add-btn" onclick="addEditColor()">Add Color</button>
+                        <div class="color-input-group" id="editColorTags"></div>
+                    </div>
+                    <div class="form-group" id="editSizesGroup">
+                        <label>Sizes</label>
+                        <select id="editSizeSelector">
+                            <option value="">Select Size</option>
+                            <option value="36">36</option>
+                            <option value="38">38</option>
+                            <option value="40">40</option>
+                            <option value="42">42</option>
+                            <option value="44">44</option>
+                        </select>
+                        <button type="button" class="add-btn" onclick="addEditSize()">Add Size</button>
+                        <div class="size-input-group" id="editSizeTags"></div>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Existing Images</label>
+                        <div class="existing-images-container" id="existingImages"></div>
+                    </div>
+                </div>
+
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Add More Images (Optional)</label>
+                        <div class="file-upload" onclick="document.getElementById('editImageInput').click()">
+                            <input type="file" id="editImageInput" accept="image/*" multiple onchange="previewEditImages()">
+                            <p>📸 Click to upload more images</p>
+                            <p style="font-size: 0.9rem; color: var(--text-light);">JPG, PNG</p>
+                        </div>
+                        <div class="preview-images" id="editPreviewContainer"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="updateBtn">Update Product</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         let authToken = '';
         let selectedColors = [];
         let selectedSizes = [];
         let selectedImages = [];
+        let editColors = [];
+        let editSizes = [];
+        let editImages = [];
+        let existingImages = [];
 
         // Category options
         const categories = {
@@ -777,7 +984,10 @@
                             <p><strong>Price:</strong> ৳${product.price.toLocaleString()}</p>
                             ${product.sizes && product.sizes.length > 0 ? `<p><strong>Sizes:</strong> ${product.sizes.join(', ')}</p>` : ''}
                         </div>
-                        <button class="delete-product-btn" onclick="deleteProduct('${product.product_id}')">Delete</button>
+                        <div class="product-actions">
+                            <button class="edit-product-btn" onclick='editProduct(${JSON.stringify(product)})'>Edit</button>
+                            <button class="delete-product-btn" onclick="deleteProduct('${product.product_id}')">Delete</button>
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {
@@ -806,6 +1016,199 @@
                 alert('Delete failed. Please try again.');
             }
         }
+
+        // Edit Product Functions
+        function editProduct(product) {
+            // Populate form
+            document.getElementById('editProductId').value = product.product_id;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editProductType').value = product.type;
+            document.getElementById('editProductDetails').value = product.details;
+            
+            // Update category options
+            updateEditCategoryOptions();
+            document.getElementById('editProductCategory').value = product.category;
+            
+            // Set colors and sizes
+            editColors = product.colors || [];
+            editSizes = product.sizes || [];
+            existingImages = product.images || [];
+            
+            updateEditColorTags();
+            updateEditSizeTags();
+            displayExistingImages();
+            
+            // Show modal
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editProductForm').reset();
+            editColors = [];
+            editSizes = [];
+            editImages = [];
+            existingImages = [];
+            document.getElementById('editPreviewContainer').innerHTML = '';
+            document.getElementById('existingImages').innerHTML = '';
+        }
+
+        function updateEditCategoryOptions() {
+            const type = document.getElementById('editProductType').value;
+            const categorySelect = document.getElementById('editProductCategory');
+            const sizesGroup = document.getElementById('editSizesGroup');
+            
+            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            
+            if (type && categories[type]) {
+                categories[type].forEach(cat => {
+                    categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+                });
+            }
+
+            // Hide sizes for 3-piece clothing
+            if (type === 'clothing' && document.getElementById('editProductCategory').value === '3-piece') {
+                sizesGroup.style.display = 'none';
+            } else if (type === 'jewelry') {
+                sizesGroup.style.display = 'none';
+            } else {
+                sizesGroup.style.display = 'block';
+            }
+        }
+
+        function addEditColor() {
+            const color = document.getElementById('editColorPicker').value;
+            if (!editColors.includes(color)) {
+                editColors.push(color);
+                updateEditColorTags();
+            }
+        }
+
+        function updateEditColorTags() {
+            const container = document.getElementById('editColorTags');
+            container.innerHTML = editColors.map((color, idx) => `
+                <div class="color-tag">
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background: ${color};"></div>
+                    <span>${color}</span>
+                    <button type="button" onclick="removeEditColor(${idx})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeEditColor(idx) {
+            editColors.splice(idx, 1);
+            updateEditColorTags();
+        }
+
+        function addEditSize() {
+            const size = document.getElementById('editSizeSelector').value;
+            if (size && !editSizes.includes(size)) {
+                editSizes.push(size);
+                updateEditSizeTags();
+            }
+        }
+
+        function updateEditSizeTags() {
+            const container = document.getElementById('editSizeTags');
+            container.innerHTML = editSizes.map((size, idx) => `
+                <div class="size-tag">
+                    <span>${size}</span>
+                    <button type="button" onclick="removeEditSize(${idx})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeEditSize(idx) {
+            editSizes.splice(idx, 1);
+            updateEditSizeTags();
+        }
+
+        function displayExistingImages() {
+            const container = document.getElementById('existingImages');
+            container.innerHTML = existingImages.map((img, idx) => `
+                <div class="existing-image">
+                    <img src="${img}" alt="Product image ${idx + 1}">
+                    <button type="button" class="image-remove-btn" onclick="removeExistingImage(${idx})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeExistingImage(idx) {
+            existingImages.splice(idx, 1);
+            displayExistingImages();
+        }
+
+        function previewEditImages() {
+            const input = document.getElementById('editImageInput');
+            const container = document.getElementById('editPreviewContainer');
+            editImages = Array.from(input.files).slice(0, 5 - existingImages.length);
+            
+            container.innerHTML = '';
+            editImages.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    container.innerHTML += `
+                        <div class="preview-image">
+                            <img src="${e.target.result}" alt="Preview ${idx + 1}">
+                            <button type="button" onclick="removeEditImage(${idx})">×</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeEditImage(idx) {
+            editImages.splice(idx, 1);
+            const dt = new DataTransfer();
+            editImages.forEach(file => dt.items.add(file));
+            document.getElementById('editImageInput').files = dt.files;
+            previewEditImages();
+        }
+
+        // Handle edit product form submission
+        document.getElementById('editProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productId = document.getElementById('editProductId').value;
+            const formData = new FormData();
+            
+            formData.append('name', document.getElementById('editProductName').value);
+            formData.append('type', document.getElementById('editProductType').value);
+            formData.append('category', document.getElementById('editProductCategory').value);
+            formData.append('details', document.getElementById('editProductDetails').value);
+            formData.append('price', document.getElementById('editProductPrice').value);
+            formData.append('sizes', JSON.stringify(editSizes));
+            formData.append('colors', JSON.stringify(editColors));
+            formData.append('existing_images', JSON.stringify(existingImages));
+            
+            // Add new images
+            editImages.forEach(image => {
+                formData.append('images', image);
+            });
+            
+            try {
+                const response = await fetch(`/api/admin/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Basic ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    closeEditModal();
+                    loadProducts();
+                    alert('Product updated successfully!');
+                } else {
+                    alert('Update failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Update failed. Please try again.');
+            }
+        });
     </script>
 </body>
 </html>
