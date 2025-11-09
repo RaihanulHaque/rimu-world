@@ -1,17 +1,38 @@
 services:
-  rimu-world:
+  app:
     build: .
-    ports:
-      - "8000:8000"
     volumes:
-      - uploads:/app/static/uploads     # Named volume (more reliable)
-      - rimu_db:/app/data               # Named volume (DB safe)
+      - uploads:/app/static/uploads
+      - rimu_db:/app/data
     environment:
       - ADMIN_USERNAME=rimu_admin
       - ADMIN_PASSWORD=rimu2024secure
     restart: unless-stopped
-    # Optional: healthcheck, depends_on, etc.
+    expose:
+      - "8000"
+    # No ports: - only Nginx talks to it
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - app
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h; done;'"
+    # Auto-renew every 12 hours
 
 volumes:
-  uploads:      # Persistent uploads
-  rimu_db:      # Persistent DB
+  uploads:
+  rimu_db:
