@@ -4,11 +4,14 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./static/uploads:/app/static/uploads
-      - rimu_db:/app/data
+      - uploads:/app/static/uploads     # Named volume (more reliable)
+      - rimu_db:/app/data               # Named volume (DB safe)
     environment:
       - ADMIN_USERNAME=rimu_admin
       - ADMIN_PASSWORD=rimu2024secure
+    restart: unless-stopped
+    # Optional: healthcheck, depends_on, etc.
 
 volumes:
-  rimu_db:
+  uploads:      # Persistent uploads
+  rimu_db:      # Persistent DB
