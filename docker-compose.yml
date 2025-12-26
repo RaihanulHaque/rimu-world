@@ -22,6 +22,9 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
+      - uploads:/app/static/uploads:ro
+      - ./static/css:/app/static/css:ro
+      - ./static/js:/app/static/js:ro
     depends_on:
       - app
 
