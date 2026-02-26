@@ -48,12 +48,19 @@ def init_db():
             category TEXT,
             details TEXT,
             price REAL NOT NULL,
+            discount_price REAL,
             sizes TEXT,
             colors TEXT,
             images TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Safely add discount_price column if it doesn't exist (for existing databases)
+    try:
+        c.execute('ALTER TABLE products ADD COLUMN discount_price REAL')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     conn.commit()
     conn.close()
@@ -122,6 +129,7 @@ async def get_products(type: Optional[str] = None):
         product['sizes'] = json.loads(product['sizes']) if product['sizes'] else []
         product['colors'] = json.loads(product['colors']) if product['colors'] else []
         product['images'] = json.loads(product['images']) if product['images'] else []
+        product['discount_price'] = product.get('discount_price', None)
         products.append(product)
     
     conn.close()
@@ -144,6 +152,7 @@ async def get_product(product_id: str):
     product['sizes'] = json.loads(product['sizes']) if product['sizes'] else []
     product['colors'] = json.loads(product['colors']) if product['colors'] else []
     product['images'] = json.loads(product['images']) if product['images'] else []
+    product['discount_price'] = product.get('discount_price', None)
     
     return product
 
@@ -154,6 +163,7 @@ async def create_product(
     category: str = Form(...),
     details: str = Form(...),
     price: float = Form(...),
+    discount_price: Optional[float] = Form(None),
     sizes: str = Form("[]"),
     colors: str = Form("[]"),
     images: List[UploadFile] = File(...),
@@ -180,8 +190,8 @@ async def create_product(
     c = conn.cursor()
     
     c.execute('''
-        INSERT INTO products (product_id, name, type, category, details, price, sizes, colors, images)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO products (product_id, name, type, category, details, price, discount_price, sizes, colors, images)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         product_id,
         name,
@@ -189,6 +199,7 @@ async def create_product(
         category,
         details,
         price,
+        discount_price,
         sizes,
         colors,
         json.dumps(image_paths)
@@ -207,6 +218,7 @@ async def update_product(
     category: str = Form(...),
     details: str = Form(...),
     price: float = Form(...),
+    discount_price: Optional[float] = Form(None),
     sizes: str = Form("[]"),
     colors: str = Form("[]"),
     images: Optional[List[UploadFile]] = File(None),
@@ -245,7 +257,7 @@ async def update_product(
     # Update product in database
     c.execute('''
         UPDATE products 
-        SET name = ?, type = ?, category = ?, details = ?, price = ?, sizes = ?, colors = ?, images = ?
+        SET name = ?, type = ?, category = ?, details = ?, price = ?, discount_price = ?, sizes = ?, colors = ?, images = ?
         WHERE product_id = ?
     ''', (
         name,
@@ -253,6 +265,7 @@ async def update_product(
         category,
         details,
         price,
+        discount_price,
         sizes,
         colors,
         json.dumps(image_paths),

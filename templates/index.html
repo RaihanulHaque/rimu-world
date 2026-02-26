@@ -336,6 +336,33 @@
             margin-bottom: 1rem;
         }
 
+        .product-price-original {
+            text-decoration: line-through;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin-right: 0.5rem;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .savings-text {
+            font-size: 0.85rem;
+            color: #27ae60;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
         .product-colors {
             display: flex;
             gap: 0.5rem;
@@ -849,15 +876,33 @@
                 return;
             }
 
-            grid.innerHTML = products.map(product => `
+            grid.innerHTML = products.map(product => {
+                let priceHtml;
+                if (product.discount_price && product.discount_price < product.price) {
+                    const pct = Math.round((1 - product.discount_price / product.price) * 100);
+                    priceHtml = `
+                        <div class="product-price">
+                            <span class="product-price-original">৳${product.price.toLocaleString()}</span>
+                            ৳${product.discount_price.toLocaleString()}
+                            <span class="discount-badge">${pct}% OFF</span>
+                        </div>
+                    `;
+                } else {
+                    priceHtml = `<div class="product-price">৳${product.price.toLocaleString()}</div>`;
+                }
+
+                return `
                 <div class="product-card" onclick="openModal('${product.product_id}')">
                     <img src="${product.images[0] || '/static/placeholder.jpg'}" alt="${product.name}" class="product-image">
-                    <span class="product-badge">${product.product_id}</span>
+                    ${product.discount_price && product.discount_price < product.price 
+                        ? `<span class="product-badge" style="background: #e74c3c;">${Math.round((1 - product.discount_price / product.price) * 100)}% OFF</span>`
+                        : `<span class="product-badge">${product.product_id}</span>`
+                    }
                     <div class="product-info">
                         <div class="product-id">ID: ${product.product_id}</div>
                         <h3 class="product-name">${product.name}</h3>
                         <p class="product-details">${product.details}</p>
-                        <div class="product-price">৳${product.price.toLocaleString()}</div>
+                        ${priceHtml}
                         ${product.colors && product.colors.length > 0 ? `
                             <div class="product-colors">
                                 ${product.colors.slice(0, 5).map(color => `
@@ -874,7 +919,7 @@
                         ` : ''}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // Open modal
@@ -886,8 +931,24 @@
             const modalBody = document.getElementById('modalBody');
 
             const whatsappMessage = encodeURIComponent(
-                `Hi! I'm interested in ${product.name} (ID: ${product.product_id}). Price: ৳${product.price.toLocaleString()}`
+                `Hi! I'm interested in ${product.name} (ID: ${product.product_id}). Price: ৳${(product.discount_price && product.discount_price < product.price ? product.discount_price : product.price).toLocaleString()}`
             );
+
+            let modalPriceHtml;
+            if (product.discount_price && product.discount_price < product.price) {
+                const pct = Math.round((1 - product.discount_price / product.price) * 100);
+                const savings = product.price - product.discount_price;
+                modalPriceHtml = `
+                    <div class="product-price">
+                        <span class="product-price-original" style="font-size: 1.3rem;">৳${product.price.toLocaleString()}</span>
+                        ৳${product.discount_price.toLocaleString()}
+                        <span class="discount-badge">${pct}% OFF</span>
+                    </div>
+                    <div class="savings-text">🎉 You save ৳${savings.toLocaleString()}!</div>
+                `;
+            } else {
+                modalPriceHtml = `<div class="product-price">৳${product.price.toLocaleString()}</div>`;
+            }
 
             modalBody.innerHTML = `
                 <div class="modal-images">
@@ -904,7 +965,7 @@
                 <div class="modal-details">
                     <h2>${product.name}</h2>
                     <div class="product-id">Product ID: ${product.product_id}</div>
-                    <div class="product-price">৳${product.price.toLocaleString()}</div>
+                    ${modalPriceHtml}
                     
                     <div class="modal-section">
                         <h4>Description</h4>
